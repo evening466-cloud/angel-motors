@@ -425,7 +425,7 @@ function renderCard(app){
       '</div>' +
 
       '<div class="card-tapzone" id="cardTapZone">' +
-        '<a href="#/site" class="cta-btn">매물 보러가기</a>' +
+        '<button type="button" id="saveContactBtn" class="cta-btn">전화번호 저장하기</button>' +
       '</div>' +
 
       '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
@@ -443,6 +443,10 @@ function renderCard(app){
     openLightbox();
   });
   document.getElementById("cardPhoneRow").addEventListener("click", function(e){ e.stopPropagation(); });
+  document.getElementById("saveContactBtn").addEventListener("click", function(e){
+    e.stopPropagation();
+    saveContact();
+  });
 
   document.getElementById("cardTapZone").addEventListener("click", function(e){
     if (e.target.closest(".cta-btn")) return;
@@ -963,6 +967,31 @@ function showToast(msg){
   toast.classList.add("show");
   clearTimeout(toastTimer);
   toastTimer = setTimeout(function(){ toast.classList.remove("show"); }, 2200);
+}
+
+function saveContact(){
+  var phoneDigits = settings.phone.replace(/[^0-9+]/g, "");
+  var vcard = [
+    "BEGIN:VCARD",
+    "VERSION:3.0",
+    "N:;" + settings.shopName + ";;;",
+    "FN:" + settings.shopName,
+    "ORG:" + settings.shopName,
+    "TEL;TYPE=CELL:" + phoneDigits,
+    "ADR;TYPE=WORK:;;" + settings.address + ";;;;",
+    "END:VCARD",
+    ""
+  ].join("\r\n");
+  var blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url;
+  a.download = settings.shopName + ".vcf";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  showToast("연락처가 저장되었습니다");
 }
 
 function openLightbox(){
