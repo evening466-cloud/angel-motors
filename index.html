@@ -123,6 +123,15 @@ button{cursor:pointer;}
 .lightbox-box .lb-hint{margin-top:6px;font-size:12px;color:var(--steel);}
 .lightbox-close{margin-top:18px;background:var(--ink);color:#fff;border:none;border-radius:10px;padding:10px 22px;font-weight:700;}
 
+/* ---------- sell inquiry modal ---------- */
+.sell-modal{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:flex-end;justify-content:center;z-index:220;}
+.sell-modal.hidden{display:none;}
+.sell-modal-box{background:#fff;border-radius:18px 18px 0 0;padding:22px 20px calc(24px + env(safe-area-inset-bottom));max-width:480px;width:100%;max-height:90vh;overflow-y:auto;}
+.sell-modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.sell-modal-title{font-size:19px;}
+.sell-modal-close{background:none;border:none;font-size:24px;line-height:1;color:var(--steel);padding:4px;}
+.sell-modal-sub{font-size:12.5px;color:var(--steel);margin:6px 0 18px;line-height:1.6;}
+
 /* ---------- toast ---------- */
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:12px 20px;border-radius:30px;box-shadow:0 6px 20px rgba(0,0,0,0.4);opacity:0;pointer-events:none;transition:opacity .25s ease, transform .25s ease;z-index:300;max-width:88vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
@@ -251,6 +260,55 @@ button{cursor:pointer;}
     <div class="lb-id" id="lightboxId"></div>
     <div class="lb-hint">카카오톡 앱에서 QR코드를 스캔해주세요</div>
     <button class="lightbox-close" id="lightboxCloseBtn">닫기</button>
+  </div>
+</div>
+
+<div id="sellModal" class="sell-modal hidden">
+  <div class="sell-modal-box">
+    <div class="sell-modal-head">
+      <h2 class="sell-modal-title">중고차 판매 문의</h2>
+      <button type="button" class="sell-modal-close" id="sellModalCloseBtn">&times;</button>
+    </div>
+    <p class="sell-modal-sub">차량 정보를 입력하시면 문자 메시지로 바로 보내드릴 수 있어요.</p>
+
+    <div class="field">
+      <label>차명</label>
+      <input type="text" id="sellCarName" placeholder="예: 그랜저 IG">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>연식</label>
+        <input type="text" id="sellYear" placeholder="예: 2019년식">
+      </div>
+      <div class="field">
+        <label>키로수</label>
+        <input type="text" id="sellMileage" placeholder="예: 8만km">
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>색상</label>
+        <input type="text" id="sellColor" placeholder="예: 흰색">
+      </div>
+      <div class="field">
+        <label>사고유무</label>
+        <select id="sellAccident">
+          <option value="무사고">무사고</option>
+          <option value="단순교환">단순교환</option>
+          <option value="사고 있음">사고 있음</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>희망 가격</label>
+      <input type="text" id="sellPrice" placeholder="예: 1200만원">
+    </div>
+    <div class="field">
+      <label>연락받으실 번호</label>
+      <input type="tel" id="sellPhone" placeholder="예: 010-1234-5678">
+    </div>
+
+    <button type="button" id="sellSubmitBtn" class="btn btn-gold btn-block">문자로 보내기</button>
   </div>
 </div>
 
@@ -425,7 +483,7 @@ function renderCard(app){
       '</div>' +
 
       '<div class="card-tapzone" id="cardTapZone">' +
-        '<button type="button" id="saveContactBtn" class="cta-btn">전화번호 저장하기</button>' +
+        '<button type="button" id="sellCarBtn" class="cta-btn">중고차 판매하기</button>' +
       '</div>' +
 
       '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
@@ -443,9 +501,9 @@ function renderCard(app){
     openLightbox();
   });
   document.getElementById("cardPhoneRow").addEventListener("click", function(e){ e.stopPropagation(); });
-  document.getElementById("saveContactBtn").addEventListener("click", function(e){
+  document.getElementById("sellCarBtn").addEventListener("click", function(e){
     e.stopPropagation();
-    saveContact();
+    openSellModal();
   });
 
   document.getElementById("cardTapZone").addEventListener("click", function(e){
@@ -969,29 +1027,43 @@ function showToast(msg){
   toastTimer = setTimeout(function(){ toast.classList.remove("show"); }, 2200);
 }
 
-function saveContact(){
-  var phoneDigits = settings.phone.replace(/[^0-9+]/g, "");
-  var vcard = [
-    "BEGIN:VCARD",
-    "VERSION:3.0",
-    "N:;" + settings.shopName + ";;;",
-    "FN:" + settings.shopName,
-    "ORG:" + settings.shopName,
-    "TEL;TYPE=CELL:" + phoneDigits,
-    "ADR;TYPE=WORK:;;" + settings.address + ";;;;",
-    "END:VCARD",
-    ""
-  ].join("\r\n");
-  var blob = new Blob([vcard], { type: "text/vcard;charset=utf-8" });
-  var url = URL.createObjectURL(blob);
-  var a = document.createElement("a");
-  a.href = url;
-  a.download = settings.shopName + ".vcf";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-  showToast("연락처가 저장되었습니다");
+function openSellModal(){
+  ["sellCarName","sellYear","sellMileage","sellColor","sellPrice","sellPhone"].forEach(function(id){
+    document.getElementById(id).value = "";
+  });
+  document.getElementById("sellAccident").value = "무사고";
+  document.getElementById("sellModal").classList.remove("hidden");
+}
+function closeSellModal(){
+  document.getElementById("sellModal").classList.add("hidden");
+}
+function submitSellForm(){
+  var carName = document.getElementById("sellCarName").value.trim();
+  var year = document.getElementById("sellYear").value.trim();
+  var mileage = document.getElementById("sellMileage").value.trim();
+  var color = document.getElementById("sellColor").value.trim();
+  var accident = document.getElementById("sellAccident").value;
+  var price = document.getElementById("sellPrice").value.trim();
+  var phone = document.getElementById("sellPhone").value.trim();
+
+  if (!carName) { showToast("차명을 입력해주세요"); return; }
+  if (!phone) { showToast("연락받으실 번호를 입력해주세요"); return; }
+
+  var body = [
+    "[중고차 판매 문의]",
+    "차명: " + carName,
+    "연식: " + (year || "-"),
+    "키로수: " + (mileage || "-"),
+    "색상: " + (color || "-"),
+    "사고유무: " + accident,
+    "희망가격: " + (price || "-"),
+    "연락처: " + phone
+  ].join("\n");
+
+  var shopPhoneDigits = settings.phone.replace(/[^0-9+]/g, "");
+  var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var sep = isIOS ? "&" : "?";
+  window.location.href = "sms:" + shopPhoneDigits + sep + "body=" + encodeURIComponent(body);
 }
 
 function openLightbox(){
@@ -1005,6 +1077,12 @@ document.getElementById("lightbox").addEventListener("click", function(e){
 document.getElementById("lightboxCloseBtn").addEventListener("click", function(){
   document.getElementById("lightbox").classList.add("hidden");
 });
+
+document.getElementById("sellModal").addEventListener("click", function(e){
+  if (e.target.id === "sellModal") closeSellModal();
+});
+document.getElementById("sellModalCloseBtn").addEventListener("click", closeSellModal);
+document.getElementById("sellSubmitBtn").addEventListener("click", submitSellForm);
 
 /* ---------- icons ---------- */
 function haloWingIconSvg(){
