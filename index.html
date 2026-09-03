@@ -493,53 +493,38 @@ function renderCard(app){
       '</div>' +
 
       '<div class="card-listings-block" id="cardListingsBlock">' +
-      '<div class="card-listings-head">' +
-        '<span class="card-listings-title">청주중고차 매물</span>' +
-        '<span class="card-listings-more" id="cardListingsMore">전체보기 &rsaquo;</span>' +
-      '</div>' +
-      (!dataLoaded.cars
-           ? '<div class="card-listings-status">불러오는 중...</div>'
-           : (function(){
-                     var preview = cars.filter(function(c){ return c.status !== "판매완료"; });
-                     if (!preview.length) preview = cars;
-                     preview = preview.slice(0, 4);
-                     return preview.length
-                                 ? '<div class="car-grid">' + preview.map(carCardHtml).join("") + '</div>'
-                                 : '<div class="card-listings-status">등록된 매물이 없습니다.</div>';
-           })()
-         ) +
-    '</div>' +
-    
-    '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
-    '</div>';
+            '<div class="card-listings-head">' +
+              '<span class="card-listings-title">청주중고차 매물</span>' +
+            '</div>' +
+            (!dataLoaded.cars
+                       ? '<div class="card-listings-status">불러오는 중...</div>'
+                       : carListMarkup()
+                     ) +
+          '</div>' +
 
-  document.getElementById("cardPhoneRow").setAttribute("href", "tel:" + settings.phone.replace(/[^0-9+]/g,""));
-  document.getElementById("cardAddressRow").addEventListener("click", function(e){
-    e.stopPropagation();
-    copyToClipboard(settings.address, function(){
-      showToast("주소가 복사되었습니다");
+          '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
+        '</div>';
+
+    document.getElementById("cardPhoneRow").setAttribute("href", "tel:" + settings.phone.replace(/[^0-9+]/g,""));
+    document.getElementById("cardAddressRow").addEventListener("click", function(e){
+          e.stopPropagation();
+          copyToClipboard(settings.address, function(){
+                  showToast("주소가 복사되었습니다");
+          });
     });
-  });
-  document.getElementById("cardKakaoQrBlock").addEventListener("click", function(e){
-    e.stopPropagation();
-    openLightbox();
-  });
-  document.getElementById("cardPhoneRow").addEventListener("click", function(e){ e.stopPropagation(); });
-  document.getElementById("sellCarBtn").addEventListener("click", function(e){
-    e.stopPropagation();
-    openSellModal();
-  });
+    document.getElementById("cardKakaoQrBlock").addEventListener("click", function(e){
+          e.stopPropagation();
+          openLightbox();
+    });
+    document.getElementById("cardPhoneRow").addEventListener("click", function(e){ e.stopPropagation(); });
+    document.getElementById("sellCarBtn").addEventListener("click", function(e){
+          e.stopPropagation();
+          openSellModal();
+    });
 
-document.getElementById("cardListingsMore").addEventListener("click", function(e){
-    e.stopPropagation();
-    location.hash = "/site";
-});
-  document.querySelectorAll("#cardListingsBlock .car-card").forEach(function(el){
-      el.addEventListener("click", function(e){
-            e.stopPropagation();
-            location.hash = "/site/" + el.getAttribute("data-id");
-      });
-  });
+    if (dataLoaded.cars) {
+          bindCarListEvents(function(){ renderCard(app); });
+    }
   
   document.getElementById("cardTapZone").addEventListener("click", function(e){
     if (e.target.closest(".cta-btn")) return;
@@ -555,50 +540,63 @@ document.getElementById("cardListingsMore").addEventListener("click", function(e
    SCREEN 2 — 매물 홈페이지(목록)
    ========================================================= */
 function renderSite(app){
-  if (!dataLoaded.cars) { app.innerHTML = '<div class="page"><p>불러오는 중...</p></div>'; return; }
-
-  var filtered = cars.filter(function(c){
-    var matchStatus = siteFilter === "전체" || c.status === siteFilter;
-    var q = siteSearch.trim().toLowerCase();
-    var matchQuery = !q || (c.brand + " " + c.model).toLowerCase().indexOf(q) !== -1;
-    return matchStatus && matchQuery;
-  });
-
-  var statuses = ["전체","판매중","상담중","판매완료"];
-
-  app.innerHTML =
-    '<div class="page">' +
-      '<h2 class="page-title">매물</h2>' +
-      '<div class="search-box">' + searchSvg() +
-        '<input id="siteSearchInput" placeholder="차종, 모델명 검색" value="' + esc(siteSearch) + '">' +
-      '</div>' +
-      '<div class="filter-chips" id="filterChips">' +
-        statuses.map(function(s){
-          return '<div class="chip' + (siteFilter === s ? ' active' : '') + '" data-status="' + s + '">' + s + '</div>';
-        }).join("") +
-      '</div>' +
-      (filtered.length === 0
-        ? '<div class="empty-state">' + carSvg() + '<p>등록된 매물이 없습니다.<br>관리자 페이지에서 첫 차량을 등록해보세요.</p></div>'
-        : '<div class="car-grid">' + filtered.map(carCardHtml).join("") + '</div>'
-      ) +
-    '</div>';
-
-  document.getElementById("siteSearchInput").addEventListener("input", function(e){
-    siteSearch = e.target.value; renderSite(app);
-    var el = document.getElementById("siteSearchInput"); el.focus(); el.selectionStart = el.selectionEnd = el.value.length;
-  });
-  document.getElementById("filterChips").addEventListener("click", function(e){
-    var chip = e.target.closest(".chip");
-    if (!chip) return;
-    siteFilter = chip.getAttribute("data-status");
-    renderSite(app);
-  });
-  document.querySelectorAll(".car-card").forEach(function(el){
-    el.addEventListener("click", function(){ location.hash = "/site/" + el.getAttribute("data-id"); });
-  });
+    if (!dataLoaded.cars) { app.innerHTML = '<div class="page"><p>불러오는 중...</p></div>'; return; }
+  
+    app.innerHTML =
+          '<div class="page">' +
+            '<h2 class="page-title">매물</h2>' +
+            carListMarkup() +
+          '</div>';
+  
+    bindCarListEvents(function(){ renderSite(app); });
 }
-
-function carCardHtml(c){
+  
+  /* 검색/필터/그리드 마크업 — 명함 화면과 매물 목록 화면에서 공통으로 사용 */
+  function carListMarkup(){
+      var filtered = cars.filter(function(c){
+            var matchStatus = siteFilter === "전체" || c.status === siteFilter;
+            var q = siteSearch.trim().toLowerCase();
+            var matchQuery = !q || (c.brand + " " + c.model).toLowerCase().indexOf(q) !== -1;
+            return matchStatus && matchQuery;
+      });
+    
+      var statuses = ["전체","판매중","상담중","판매완료"];
+    
+      return (
+            '<div class="search-box">' + searchSvg() +
+              '<input id="siteSearchInput" placeholder="차종, 모델명 검색" value="' + esc(siteSearch) + '">' +
+            '</div>' +
+            '<div class="filter-chips" id="filterChips">' +
+              statuses.map(function(s){
+                        return '<div class="chip' + (siteFilter === s ? ' active' : '') + '" data-status="' + s + '">' + s + '</div>';
+              }).join("") +
+            '</div>' +
+            (filtered.length === 0
+                   ? '<div class="empty-state">' + carSvg() + '<p>등록된 매물이 없습니다.<br>관리자 페이지에서 첫 차량을 등록해보세요.</p></div>'
+                   : '<div class="car-grid">' + filtered.map(carCardHtml).join("") + '</div>'
+                 )
+          );
+  }
+  
+  function bindCarListEvents(rerender){
+      document.getElementById("siteSearchInput").addEventListener("input", function(e){
+            siteSearch = e.target.value; rerender();
+            var el = document.getElementById("siteSearchInput"); el.focus(); el.selectionStart = el.selectionEnd = el.value.length;
+      });
+      document.getElementById("filterChips").addEventListener("click", function(e){
+            var chip = e.target.closest(".chip");
+            if (!chip) return;
+            siteFilter = chip.getAttribute("data-status");
+            rerender();
+      });
+      document.querySelectorAll(".car-card").forEach(function(el){
+            el.addEventListener("click", function(e){
+                    e.stopPropagation();
+                    location.hash = "/site/" + el.getAttribute("data-id");
+            });
+      });
+  }
+  function carCardHtml(c){
   var thumb = c.photos && c.photos[0];
   var statusClass = c.status === "판매중" ? "status-selling" : c.status === "상담중" ? "status-talking" : "status-done";
   return (
