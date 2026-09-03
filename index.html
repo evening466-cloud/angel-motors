@@ -495,7 +495,7 @@ function renderCard(app){
         '<button type="button" id="sellCarBtn" class="cta-btn">중고차 판매하기</button>' +
       '</div>' +
 
-      '<a class="listings-link-btn" id="goListingsBtn" href="#/site">' +
+      '<a class="listings-link-btn" id="goListingsBtn" href="https://cheongju-usedcar.pages.dev/">' +
             carSvg() +
             '<span>청주중고차 매물보러가기</span>' +
           '</a>' +
@@ -522,11 +522,11 @@ function renderCard(app){
   
   document.getElementById("cardTapZone").addEventListener("click", function(e){
     if (e.target.closest(".cta-btn")) return;
-    location.hash = "/site";
+    location.href = "https://cheongju-usedcar.pages.dev/";
   });
   document.querySelector(".card-shell").addEventListener("click", function(e){
     if (e.target.closest(".contact-block") || e.target.closest(".card-tapzone") || e.target.closest(".listings-link-btn")) return;
-    location.hash = "/site";
+    location.href = "https://cheongju-usedcar.pages.dev/";
   });
 }
 
