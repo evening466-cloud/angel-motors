@@ -114,7 +114,13 @@ button{cursor:pointer;}
 .card-tapzone{cursor:pointer;}
 .card-footer-note{text-align:center;font-size:12px;color:var(--steel);line-height:1.5;margin-top:2px;}
 
-/* ---------- lightbox ---------- */
+.card-listings-block{cursor:default;}
+  .card-listings-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:10px;}
+  .card-listings-title{font-size:16px;font-weight:900;color:var(--ink);}
+  .card-listings-more{font-size:12px;font-weight:700;color:var(--gold);cursor:pointer;}
+  .card-listings-status{text-align:center;padding:30px 10px;color:var(--steel-light);font-size:13px;}
+  
+  /* ---------- lightbox ---------- */
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,0.88);display:flex;align-items:center;justify-content:center;z-index:200;padding:30px;}
 .lightbox.hidden{display:none;}
 .lightbox-box{background:#fff;border-radius:16px;padding:24px;text-align:center;max-width:340px;width:100%;}
@@ -486,7 +492,25 @@ function renderCard(app){
         '<button type="button" id="sellCarBtn" class="cta-btn">중고차 판매하기</button>' +
       '</div>' +
 
-      '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
+      '<div class="card-listings-block" id="cardListingsBlock">' +
+      '<div class="card-listings-head">' +
+        '<span class="card-listings-title">청주중고차 매물</span>' +
+        '<span class="card-listings-more" id="cardListingsMore">전체보기 &rsaquo;</span>' +
+      '</div>' +
+      (!dataLoaded.cars
+           ? '<div class="card-listings-status">불러오는 중...</div>'
+           : (function(){
+                     var preview = cars.filter(function(c){ return c.status !== "판매완료"; });
+                     if (!preview.length) preview = cars;
+                     preview = preview.slice(0, 4);
+                     return preview.length
+                                 ? '<div class="car-grid">' + preview.map(carCardHtml).join("") + '</div>'
+                                 : '<div class="card-listings-status">등록된 매물이 없습니다.</div>';
+           })()
+         ) +
+    '</div>' +
+    
+    '<p class="card-footer-note">명함을 탭하면 매물 홈페이지로 이동합니다</p>' +
     '</div>';
 
   document.getElementById("cardPhoneRow").setAttribute("href", "tel:" + settings.phone.replace(/[^0-9+]/g,""));
@@ -506,12 +530,23 @@ function renderCard(app){
     openSellModal();
   });
 
+document.getElementById("cardListingsMore").addEventListener("click", function(e){
+    e.stopPropagation();
+    location.hash = "/site";
+});
+  document.querySelectorAll("#cardListingsBlock .car-card").forEach(function(el){
+      el.addEventListener("click", function(e){
+            e.stopPropagation();
+            location.hash = "/site/" + el.getAttribute("data-id");
+      });
+  });
+  
   document.getElementById("cardTapZone").addEventListener("click", function(e){
     if (e.target.closest(".cta-btn")) return;
     location.hash = "/site";
   });
   document.querySelector(".card-shell").addEventListener("click", function(e){
-    if (e.target.closest(".contact-block") || e.target.closest(".card-tapzone")) return;
+    if (e.target.closest(".contact-block") || e.target.closest(".card-tapzone") || e.target.closest(".card-listings-block")) return;
     location.hash = "/site";
   });
 }
