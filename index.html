@@ -77,6 +77,9 @@ button{cursor:pointer;}
 .card-hero img.logo-img{width:150px;height:150px;object-fit:contain;}
 .biz-name{font-size:32px;letter-spacing:1px;color:var(--ink);}
 .tagline{margin:0;font-size:14px;font-weight:700;color:var(--gold);letter-spacing:0.3px;}
+.staff-line{margin:-4px 0 0;display:flex;align-items:center;gap:8px;}
+.staff-title{font-size:11px;font-weight:800;color:#fff;background:var(--ink);padding:4px 10px;border-radius:20px;letter-spacing:0.5px;}
+.staff-name{font-size:15px;font-weight:800;color:var(--ink);}
 
 .contact-block{display:flex;flex-direction:column;gap:10px;}
 .contact-row{
@@ -361,6 +364,8 @@ function defaultSettings(){
     shopName: "천사모터스",
     englishName: "ANGEL MOTORS Co., Ltd.",
     tagline: "믿을 수 있는 중고차, 모든 중고차 판매",
+    staffName: "허두성",
+    staffTitle: "매입팀장",
     phone: "010-5035-0444",
     address: "청주시 청원구 2순환로 50",
     logoUrl: "",
@@ -470,6 +475,9 @@ function renderCard(app){
           : '<div class="halo-badge">' + haloWingIconSvg() + '</div>') +
         '<h1 class="biz-name">' + esc(settings.shopName) + '</h1>' +
         '<p class="tagline">' + esc(settings.tagline) + '</p>' +
+        (settings.staffName
+          ? '<p class="staff-line"><span class="staff-title">' + esc(settings.staffTitle) + '</span><span class="staff-name">' + esc(settings.staffName) + '</span></p>'
+          : '') +
       '</div>' +
 
       '<div class="halo-divider"><span class="halo-dot"></span></div>' +
@@ -919,6 +927,10 @@ function renderAdminSettings(body){
     '</div>' +
     '<div class="field"><label>상호명</label><input id="sShopName" value="' + esc(settings.shopName) + '"></div>' +
     '<div class="field"><label>태그라인</label><input id="sTagline" value="' + esc(settings.tagline) + '"></div>' +
+    '<div class="field-row">' +
+      '<div class="field"><label>담당자 이름</label><input id="sStaffName" value="' + esc(settings.staffName || "") + '"></div>' +
+      '<div class="field"><label>직급</label><input id="sStaffTitle" value="' + esc(settings.staffTitle || "") + '"></div>' +
+    '</div>' +
     '<div class="field"><label>전화번호</label><input id="sPhone" value="' + esc(settings.phone) + '"></div>' +
     '<div class="field"><label>주소</label><input id="sAddress" value="' + esc(settings.address) + '"></div>' +
     '<div class="field"><label>카카오톡 ID</label><input id="sKakaoId" value="' + esc(settings.kakaoId) + '"></div>' +
@@ -964,6 +976,8 @@ function renderAdminSettings(body){
     var data = {
       shopName: document.getElementById("sShopName").value.trim(),
       tagline: document.getElementById("sTagline").value.trim(),
+      staffName: document.getElementById("sStaffName").value.trim(),
+      staffTitle: document.getElementById("sStaffTitle").value.trim(),
       phone: document.getElementById("sPhone").value.trim(),
       address: document.getElementById("sAddress").value.trim(),
       kakaoId: document.getElementById("sKakaoId").value.trim(),
